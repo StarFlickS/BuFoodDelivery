@@ -115,8 +115,8 @@ def LoginPage(root):
             command=loginclicked).grid(row=0, column=0)  # type: ignore
 
 
-def MenuPage(user_id: int):
-      global menuFrame, pay_button
+def MenuPage():
+      global menuFrame, basket_button, menu
       # get data from Menu table in database
       menu = getMenuFromDatabase()
       
@@ -191,7 +191,7 @@ def MenuPage(user_id: int):
              bg="white",
              borderless=1, # type: ignore
              highlightthickness=1,
-             command=lambda: AddFoodToBasketPage(menu[0][0], user_id)).grid(row=0, column=0, sticky="news")
+             command=lambda: AddFoodToBasketPage(menu[0][0], user_id, False)).grid(row=0, column=0, sticky="news")
       
       Button(buttonFrm2,
              image=food2_img,
@@ -199,7 +199,7 @@ def MenuPage(user_id: int):
              bg="white",
              borderless=1, # type: ignore
              highlightthickness=1,
-             command=lambda: AddFoodToBasketPage(menu[1][0], user_id)).grid(row=0, column=0, sticky="news")
+             command=lambda: AddFoodToBasketPage(menu[1][0], user_id, False)).grid(row=0, column=0, sticky="news")
       
       Button(buttonFrm3,
              image=food3_img,
@@ -207,7 +207,7 @@ def MenuPage(user_id: int):
              bg="white",
              borderless=1, # type: ignore
              highlightthickness=1,
-             command=lambda: AddFoodToBasketPage(menu[2][0], user_id)).grid(row=0, column=0, sticky="news")
+             command=lambda: AddFoodToBasketPage(menu[2][0], user_id, False)).grid(row=0, column=0, sticky="news")
       
       Button(buttonFrm4,
              image=food4_img,
@@ -215,7 +215,7 @@ def MenuPage(user_id: int):
              bg="white",
              borderless=1, # type: ignore
              highlightthickness=1,
-             command=lambda: AddFoodToBasketPage(menu[3][0], user_id)).grid(row=0, column=0, sticky="news")
+             command=lambda: AddFoodToBasketPage(menu[3][0], user_id, False)).grid(row=0, column=0, sticky="news")
 
       # Name and price Label
       # Name Label
@@ -262,19 +262,19 @@ def MenuPage(user_id: int):
             fg="#EDBA9B",
             font="verdana 20 bold").grid(row=2, column=0)
 
-      pay_button = Button(bottom,
+      basket_button = Button(bottom,
                           bg="green",
                           fg="black",
                           borderless = 1,# type: ignore
                           highlightthickness=1,
                           font="verdana 25 bold",
-                          text = "ชำระเงิน",
-                          command=lambda: AddFromBasketToDatabase(user_id)
+                          text = "ตะกร้า",
+                          command= BasketFrame
                         )                       
-      pay_button.grid(row=2, column=0, columnspan=2)
+      basket_button.grid(row=2, column=0, columnspan=2)
 
 
-def AddFoodToBasketPage(food_id: int, user_id: int):
+def AddFoodToBasketPage(food_id: int, user_id: int, isEdit: bool, index = None):
       '''
       Create Page for adding food to the basket and prepare data(s) before putting in database
       '''
@@ -356,29 +356,178 @@ def AddFoodToBasketPage(food_id: int, user_id: int):
       textBox = Text(textFrame, font="verdana")
       textBox.grid(row=0, column=0, sticky="news")
 
-      Button(bottom,
-             text="ใส่ตะกร้า",
-             bg="#DC7633",
-             fg="black",
-             borderless=1, # type: ignore
-             highlightthickness=1,
-             command = lambda: AddFoodToBasket(food_id, quantity_spy.get(), textBox.get("1.0",'end-1c'))).grid(row=2, column=0, sticky='e')
+      addButton = Button(bottom,
+                  text="ใส่ตะกร้า",
+                  bg="#DC7633",
+                  fg="black",
+                  borderless=1, # type: ignore
+                  highlightthickness=1,
+                  command = lambda: AddFoodToBasket(food_id, quantity_spy.get(), textBox.get("1.0",'end-1c')))
+      addButton.grid(row=2, column=0, sticky='e')
       
-      for i in range(len(basket)):
-            if basket[i][0] == food_id:
-                  wantToChange = ifWantToChange()
-                  if (wantToChange == False):
-                        foodToBasketFrame.destroy()
-                  else:
-                        quantity_spy.set(basket[i][1])
-                        textBox.insert(INSERT, basket[i][2])
-                        break
+      if isEdit == True:
+            quantity_spy.set(basket[index][1]) # type: ignore
+            textBox.insert(INSERT, basket[index][2]) # type: ignore
+            addButton["text"] = "แก้ไขสินค้า"
+            addButton["command"] = lambda: editBasket(index, quantity_spy.get(), textBox.get("1.0",'end-1c')) # type: ignore
 
-     
+
 def BasketFrame():
-      basketFrame = Frame(menuFrame, bg="red")
-      basketFrame.grid(row=0, rowspan=3, column=0, sticky="news")
+      global basketFrame
+      if len(basket) == 0:
+            return messagebox.showerror("Admin:", "ยังไม่มีสินค้าในตะกร้า")
       
+      basketFrame = Frame(menuFrame, bg="#EDBA9B")
+      basketFrame.rowconfigure(0, weight=1)
+      basketFrame.rowconfigure(1, weight=5)
+      basketFrame.rowconfigure(2, weight=1)
+      basketFrame.columnconfigure(0, weight=1)
+      basketFrame.grid(row=0, rowspan=3, column=0, sticky="news")
+       
+      top = Frame(basketFrame, bg="#EDBA9B")
+      top.rowconfigure(0, weight=1)
+      top.columnconfigure((0,1,2), weight=1) # type: ignore
+      top.grid(row=0, column=0, sticky="news")
+
+      middle = Frame(basketFrame, bg="#EDBA9B")
+      middle.rowconfigure(0, weight=2)
+      middle.rowconfigure(1, weight=1)
+      middle.columnconfigure(0, weight=1)
+      middle.grid(row=1, column=0, sticky="news")
+
+      bot = Frame(basketFrame, bg="#EDBA9B")
+      bot.rowconfigure(0, weight=1)
+      bot.columnconfigure(0, weight=1)
+      bot.grid(row=2, column=0, sticky="news")
+
+      bot.grid(row=2, column=0, sticky="news")
+
+      # Go back Button
+      Button(top,
+            image=goBack_img,
+            bg="#EDBA9B",
+            borderless = 1, # type: ignore
+            highlightthickness=1,
+            command=basketFrame.destroy).grid(row=0, column=0, sticky='w')
+
+      Label(top,
+            text="Order",
+            fg="white",
+            bg="#EDBA9B",
+            font="verdana 30 bold").grid(row=0, column=1, sticky='w')
+      
+      # Middle
+      canvasRows = [i for i in range(len(basket))]
+      canvasRows = tuple(canvasRows)
+
+      orderCanvas = Canvas(middle, bg="#EDBA9B", highlightthickness=1)
+      orderCanvas.grid(row=0, column=0, sticky="news")
+
+      scrollbar = Scrollbar(middle, orient=VERTICAL, command=orderCanvas.yview,width=5)
+      scrollbar.grid(row=0, column=0, sticky='nse')
+
+      orderCanvas.configure(yscrollcommand=scrollbar.set)
+      orderCanvas.bind("<Configure>", lambda e: orderCanvas.configure(scrollregion= orderCanvas.bbox("all")))
+
+      orderFrame = Frame(orderCanvas, bg="#EDBA9B")
+      orderFrame.columnconfigure(0, weight=1)
+      orderCanvas.create_window((1,1), width=w, window=orderFrame, anchor="nw")
+
+      for i in range(len(basket)):
+            frame = Frame(orderFrame, bg="white")
+            frame.rowconfigure(0, weight=1)
+            frame.columnconfigure((0,1,2), weight=1) # type: ignore
+            frame.grid(row=i, column=0, sticky="news", pady=10, padx=10)
+
+            left = Frame(frame, bg="white")
+            left.rowconfigure(0, weight=1)
+            left.columnconfigure(0, weight=1)
+            left.grid(row=0, column=0, sticky="news")
+
+            center = Frame(frame, bg="white")
+            center.rowconfigure((0,1), weight=1) # type: ignore
+            center.columnconfigure(0, weight=1)
+            center.grid(row=0, column=1, sticky="news")
+
+            right = Frame(frame, bg="white")
+            right.rowconfigure((0,1,2), weight=1) # type: ignore
+            right.columnconfigure(0, weight=1)
+            right.grid(row=0, column=2, sticky="news")
+            
+            imageLabel = Label(left, bg="white")
+            imageLabel.grid(row=0, column=0)
+
+            if basket[i][0] == 1:
+                  imageLabel["image"] = food1_img
+            elif basket[i][0] == 2:
+                  imageLabel["image"] = food2_img
+            elif basket[i][0] == 3:
+                  imageLabel["image"] = food3_img
+            else:
+                  imageLabel["image"] = food4_img
+
+            Label(center, 
+                  text=menu[basket[i][0] - 1][1], 
+                  font="verdana 20 bold", 
+                  bg="white", 
+                  fg="#EDBA9B").grid(row=0, column=0)
+            Label(center, 
+                  text=basket[i][2], 
+                  font="verdana 10", 
+                  bg="white", 
+                  fg="#EDBA9B").grid(row=1, column=0)
+            Label(right, 
+                  text=str(menu[basket[i][0] - 1][2]) + " บ.", 
+                  font="verdana 20 bold", 
+                  bg="white", 
+                  fg="#EDBA9B").grid(row=0, column=0)
+            Label(right, 
+                  text=str(basket[i][1]) + " ชิ้น", 
+                  font="verdana 20 bold", 
+                  bg="white", 
+                  fg="#EDBA9B").grid(row=1, column=0)
+
+            # Edit Button
+            Button(right,
+                  text="แก้ไข",
+                  bg="red",
+                  fg="black",
+                  font="verdana 15 bold",
+                  highlightthickness=0,
+                  borderless=1, # type: ignore
+                  command = lambda index = i: editButtonClicked(index)).grid(row=3, column=0) 
+
+      detailFrame = Frame(middle, bg="#EDBA9B")
+      detailFrame.rowconfigure((0,1,2), weight=1) # type: ignore
+      detailFrame.columnconfigure(0, weight=1)
+      detailFrame.grid(row=1, column=0, sticky="news")
+
+      # Items total and Delivery cost
+      itemAmount = getItemAmount()
+      costTotal = getCostTotal()
+      Label(detailFrame,
+            text="Item(s) total: " + str(itemAmount),
+            fg="black",
+            bg="#EDBA9B",
+            font="verdana 25 bold").grid(row=0, column=0, sticky='se', pady=10, padx=20)
+      Label(detailFrame,
+            text="Delivery: ฟรี",
+            fg="black",
+            bg="#EDBA9B",
+            font="verdana 25 bold").grid(row=1, column=0, sticky='ne', padx=20)
+      Label(detailFrame,
+            text="Total: " + str(costTotal) + " บาท.",
+            fg="black",
+            bg="#EDBA9B",
+            font="verdana 25 bold").grid(row=2, column=0, sticky='ne', pady=10, padx=20)
+      
+      Button(bot,
+            text="ชำระเงิน",
+            bg="green",
+            fg="black",
+            font="verdana 25 bold",
+            highlightthickness=0,
+            borderless=1).grid(row=0, column=0) # type: ignore
 
 
 def loginclicked():
@@ -399,8 +548,9 @@ def loginclicked():
                   result = cursor.fetchone()
                   if result:
                         messagebox.showinfo("Admin:", "Login Successfully.")
+                        global user_id
                         user_id = result[0]
-                        MenuPage(user_id)
+                        MenuPage()
                   else:
                         messagebox.showerror(
                               "Admin:", "Email or Password incorrect, please try again.")
@@ -409,9 +559,24 @@ def loginclicked():
                         gmail_ent.focus_force()
 
 
+def editButtonClicked(index):
+      AddFoodToBasketPage(basket[index][0], user_id, True, index)
 
-def ifWantToChange():
-      return askyesno("confirmation", "เมนูนี้มีอยู่ในตะกร้าแล้ว ต้องการแก้ไขหรือไม่?")
+
+def editBasket(index: int, quantity: int, extra: str):
+      tmp = list(basket[index])
+      tmp[1] = quantity
+      tmp[2] = extra
+      basket[index] = tuple(tmp)
+      messagebox.showinfo("admin", "แก้ไขสินค้าเรียบร้อยแล้ว")
+
+      foodToBasketFrame.destroy()
+      basketFrame.destroy()
+      BasketFrame()
+
+
+def wantToChange():
+      return askyesno("confirmation", "ต้องการแก้ไขหรือไม่?")
 
 
 def getMenuFromDatabase():
@@ -423,6 +588,23 @@ def getMenuFromDatabase():
       result = cursor.fetchall()
 
       return result
+
+
+def getItemAmount():
+      amount = 0
+      for i in range(len(basket)):
+            amount += basket[i][1]
+      
+      return amount
+
+
+def getCostTotal():
+      total = 0
+      for i in range(len(basket)):
+            price = menu[basket[i][0] - 1][2]
+            total += (basket[i][1]) * price
+      
+      return total
 
 
 def getFoodName(food_id: int):
@@ -454,23 +636,11 @@ def AddFoodToBasket(food_id: int, quantity: int, extra: str):
       if extra == "":
             extra = " "
       
-      found = False
-      for i in range(len(basket)):
-            if basket[i][0] == food_id:
-                  found = True
-                  tmp = list(basket[i])
-                  tmp[1] = quantity
-                  tmp[2] = extra
-                  basket[i] = tuple(tmp)
-                  messagebox.showinfo("admin", "แก้ไขสินค้าเรียบร้อยแล้ว")
-                  break
-      
-      if found == False:
-            basket.append((food_id, quantity, extra))
-            messagebox.showinfo("admin", "เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว")
+      basket.append((food_id, quantity, extra))
+      messagebox.showinfo("admin", "เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว")
             
       foodToBasketFrame.destroy()
-      pay_button["text"] = "ชำระเงิน (" + str(len(basket)) + ")"
+      basket_button["text"] = "ตะกร้า (" + str(len(basket)) + ")"
       print(basket)
 
 
@@ -496,9 +666,6 @@ def AddFromBasketToDatabase(user_id: int):
       cursor.execute(sql, [user_id, order_id])
       conn.commit()
 
-
-
-      
 
 # width and hight
 w = 375
