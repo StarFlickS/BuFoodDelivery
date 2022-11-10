@@ -191,7 +191,7 @@ def MenuPage():
              bg="white",
              borderless=1, # type: ignore
              highlightthickness=1,
-             command=lambda: AddFoodToBasketPage(menu[0][0], user_id, False)).grid(row=0, column=0, sticky="news")
+             command=lambda: AddFoodToBasketPage(menu[0][0], user_id)).grid(row=0, column=0, sticky="news")
       
       Button(buttonFrm2,
              image=food2_img,
@@ -199,7 +199,7 @@ def MenuPage():
              bg="white",
              borderless=1, # type: ignore
              highlightthickness=1,
-             command=lambda: AddFoodToBasketPage(menu[1][0], user_id, False)).grid(row=0, column=0, sticky="news")
+             command=lambda: AddFoodToBasketPage(menu[1][0], user_id)).grid(row=0, column=0, sticky="news")
       
       Button(buttonFrm3,
              image=food3_img,
@@ -207,7 +207,7 @@ def MenuPage():
              bg="white",
              borderless=1, # type: ignore
              highlightthickness=1,
-             command=lambda: AddFoodToBasketPage(menu[2][0], user_id, False)).grid(row=0, column=0, sticky="news")
+             command=lambda: AddFoodToBasketPage(menu[2][0], user_id)).grid(row=0, column=0, sticky="news")
       
       Button(buttonFrm4,
              image=food4_img,
@@ -215,7 +215,7 @@ def MenuPage():
              bg="white",
              borderless=1, # type: ignore
              highlightthickness=1,
-             command=lambda: AddFoodToBasketPage(menu[3][0], user_id, False)).grid(row=0, column=0, sticky="news")
+             command=lambda: AddFoodToBasketPage(menu[3][0], user_id)).grid(row=0, column=0, sticky="news")
 
       # Name and price Label
       # Name Label
@@ -274,7 +274,7 @@ def MenuPage():
       basket_button.grid(row=2, column=0, columnspan=2)
 
 
-def AddFoodToBasketPage(food_id: int, user_id: int, isEdit: bool, index = None):
+def AddFoodToBasketPage(food_id: int, user_id: int, isEdit = False, index = None):
       '''
       Create Page for adding food to the basket and prepare data(s) before putting in database
       '''
@@ -370,6 +370,14 @@ def AddFoodToBasketPage(food_id: int, user_id: int, isEdit: bool, index = None):
             textBox.insert(INSERT, basket[index][2]) # type: ignore
             addButton["text"] = "แก้ไขสินค้า"
             addButton["command"] = lambda: editBasket(index, quantity_spy.get(), textBox.get("1.0",'end-1c')) # type: ignore
+
+            Button(bottom,
+                   text="ลบสินค้า",
+                   bg="red",
+                   fg="black",
+                   borderless=1, # type: ignore
+                   highlightthickness=0,
+                   command=lambda: deleteFromBasket(index)).grid(row=2, column=0, sticky='w') # type: ignore
 
 
 def BasketFrame():
@@ -495,7 +503,7 @@ def BasketFrame():
                   font="verdana 15 bold",
                   highlightthickness=0,
                   borderless=1, # type: ignore
-                  command = lambda index = i: editButtonClicked(index)).grid(row=3, column=0) 
+                  command = lambda index = i: AddFoodToBasketPage(basket[index][0], user_id, True, index)).grid(row=3, column=0) 
 
       detailFrame = Frame(middle, bg="#EDBA9B")
       detailFrame.rowconfigure((0,1,2), weight=1) # type: ignore
@@ -559,8 +567,18 @@ def loginclicked():
                         gmail_ent.focus_force()
 
 
-def editButtonClicked(index):
-      AddFoodToBasketPage(basket[index][0], user_id, True, index)
+def deleteFromBasket(index: int):
+      if wantToDelete() == False:
+            return
+      
+      basket.pop(index)
+      foodToBasketFrame.destroy()
+      basketFrame.destroy()
+      if len(basket) > 0:
+            BasketFrame()
+            basket_button["text"] = "ตะกร้า (" + str(len(basket)) + ")"
+      else:
+            basket_button["text"] = "ตะกร้า"
 
 
 def editBasket(index: int, quantity: int, extra: str):
@@ -575,8 +593,8 @@ def editBasket(index: int, quantity: int, extra: str):
       BasketFrame()
 
 
-def wantToChange():
-      return askyesno("confirmation", "ต้องการแก้ไขหรือไม่?")
+def wantToDelete():
+      return askyesno("confirmation", "ต้องการลบสินค้านี้หรือไม่?")
 
 
 def getMenuFromDatabase():
@@ -641,7 +659,6 @@ def AddFoodToBasket(food_id: int, quantity: int, extra: str):
             
       foodToBasketFrame.destroy()
       basket_button["text"] = "ตะกร้า (" + str(len(basket)) + ")"
-      print(basket)
 
 
 def AddFromBasketToDatabase(user_id: int):
