@@ -535,7 +535,8 @@ def BasketFrame():
             fg="black",
             font="verdana 25 bold",
             highlightthickness=0,
-            borderless=1).grid(row=0, column=0) # type: ignore
+            borderless=1, # type: ignore
+            command= lambda: paymentClicked(user_id)).grid(row=0, column=0) 
 
 
 def loginclicked():
@@ -560,13 +561,144 @@ def loginclicked():
                         user_id = result[0]
                         MenuPage()
                   else:
-                        messagebox.showerror(
-                              "Admin:", "Email or Password incorrect, please try again.")
+                        messagebox.showerror("Admin:", "Email or Password incorrect, please try again.")
                         pwd_spy.set("")
                         gmail_spy.set("")
                         gmail_ent.focus_force()
 
 
+def paymentClicked(user_id: int):
+      AddFromBasketToDatabase(user_id)
+      PaymentFrame()
+
+
+def PaymentFrame():
+      global paymentFrame
+      paymentFrame = Frame(basketFrame, bg="#EDBA9B")
+      paymentFrame.rowconfigure((0,1,2), weight=1) # type: ignore
+      paymentFrame.columnconfigure(0, weight=1)
+      paymentFrame.grid(row=0, rowspan=3, sticky="news")
+
+      top = Frame(paymentFrame, bg="#EDBA9B")
+      top.rowconfigure(0, weight=1)
+      top.rowconfigure(1, weight=4)
+      top.columnconfigure(0, weight=1)
+      top.grid(row=0, column=0, sticky="news")
+
+      middle = Frame(paymentFrame, bg="#EDBA9B")
+      middle.rowconfigure(0, weight=1)
+      middle.rowconfigure(1, weight=5)
+      middle.columnconfigure(0, weight=1)
+      middle.grid(row=1, column=0, sticky="news")
+
+      bot = Frame(paymentFrame, bg="#EDBA9B")
+      bot.rowconfigure(0, weight=1)
+      bot.columnconfigure(0, weight=1)
+      bot.grid(row=2, column=0, sticky="news")
+      
+      Label(top,
+            text="ชำระเงินสำเร็จ",
+            font="verdana 25 bold",
+            fg="black",
+            bg="#EDBA9B").grid(row=1, column=0, sticky='n')
+      
+      Label(top,
+            image=payment_img,
+            highlightthickness=0,
+            borderwidth=0).grid(row=1,column=0,)
+      
+      Label(middle,
+            text="วิธีการจัดส่ง: Delivery",
+            font="verdana 25 bold",
+            fg="black",
+            bg="#EDBA9B").grid(row=0, column=0)
+      
+      canvasRows = [i for i in range(len(basket))]
+      canvasRows = tuple(canvasRows)
+
+      orderCanvas = Canvas(middle, bg="#EDBA9B", highlightthickness=1)
+      orderCanvas.grid(row=1, column=0, sticky="news")
+
+      scrollbar = Scrollbar(middle, orient=VERTICAL, command=orderCanvas.yview,width=5)
+      scrollbar.grid(row=1, column=0, sticky='nse')
+
+      orderCanvas.configure(yscrollcommand=scrollbar.set)
+      orderCanvas.bind("<Configure>", lambda e: orderCanvas.configure(scrollregion= orderCanvas.bbox("all")))
+
+      orderFrame = Frame(orderCanvas, bg="#EDBA9B")
+      orderFrame.columnconfigure(0, weight=1)
+      orderCanvas.create_window((1,1), width=w, window=orderFrame, anchor="nw")
+
+      for i in range(len(basket)):
+            frame = Frame(orderFrame, bg="#EDBA9B")
+            frame.rowconfigure(0, weight=1)
+            frame.columnconfigure((0,1,2), weight=1) # type: ignore
+            frame.grid(row=i, column=0, sticky="news", pady=10, padx=10)
+
+            left = Frame(frame, bg="#EDBA9B")
+            left.rowconfigure(0, weight=1)
+            left.columnconfigure(0, weight=1)
+            left.grid(row=0, column=0, sticky="news")
+
+            center = Frame(frame, bg="#EDBA9B")
+            center.rowconfigure((0,1), weight=1) # type: ignore
+            center.columnconfigure(0, weight=1)
+            center.grid(row=0, column=1, sticky="news")
+
+            right = Frame(frame, bg="#EDBA9B")
+            right.rowconfigure((0,1,2), weight=1) # type: ignore
+            right.columnconfigure(0, weight=1)
+            right.grid(row=0, column=2, sticky="news")
+            
+            imageLabel = Label(left, bg="#EDBA9B")
+            imageLabel.grid(row=0, column=0)
+
+            if basket[i][0] == 1:
+                  imageLabel["image"] = food1_img
+            elif basket[i][0] == 2:
+                  imageLabel["image"] = food2_img
+            elif basket[i][0] == 3:
+                  imageLabel["image"] = food3_img
+            else:
+                  imageLabel["image"] = food4_img
+
+            Label(center, 
+                  text=menu[basket[i][0] - 1][1], 
+                  font="verdana 20 bold", 
+                  bg="#EDBA9B", 
+                  fg="black").grid(row=0, column=0)
+            Label(center, 
+                  text=basket[i][2], 
+                  font="verdana 10", 
+                  bg="#EDBA9B", 
+                  fg="black").grid(row=1, column=0)
+            Label(right, 
+                  text=str(menu[basket[i][0] - 1][2]) + " บ.", 
+                  font="verdana 20 bold", 
+                  bg="#EDBA9B", 
+                  fg="black").grid(row=0, column=0)
+            Label(right, 
+                  text=str(basket[i][1]) + " ชิ้น", 
+                  font="verdana 20 bold", 
+                  bg="#EDBA9B", 
+                  fg="black").grid(row=1, column=0)
+      
+      Label(bot,
+      text="Total: " + str(getCostTotal()) + " บาท.",
+      fg="black",
+      bg="#EDBA9B",
+      font="verdana 25 bold").grid(row=0, column=0)
+      
+      Button(bot,
+      text="Exit",
+      bg="red",
+      font="verdana 30 bold",
+      fg="black",
+      borderless = 1, # type: ignore
+      highlightthickness=1,
+      command=exit).grid(row=1, column=0)
+      
+      
 def deleteFromBasket(index: int):
       if wantToDelete() == False:
             return
@@ -679,8 +811,23 @@ def AddFromBasketToDatabase(user_id: int):
       order_id = cursor.lastrowid
       conn.commit()
 
-      sql = "INSERT INTO OrderTable (user_id, order_id) VALUES (?, ?)"
-      cursor.execute(sql, [user_id, order_id])
+      sql = "SELECT * FROM OrderTable WHERE user_id = ?"
+      cursor.execute(sql, [user_id])
+      result = cursor.fetchone()
+      # if user_id already exists
+      if result: 
+            sql = "SELECT order_id FROM OrderTable WHERE user_id = ?"
+            cursor.execute(sql, [user_id])
+            newOrderId = cursor.fetchone()
+            newOrderId = newOrderId[0]
+            newOrderId += "," + str(order_id)
+            
+            #Update order_id
+            sql = "UPDATE OrderTable SET order_id = ? WHERE user_id = ?"
+            cursor.execute(sql, [newOrderId, user_id])
+      else:
+            sql = "INSERT INTO OrderTable (user_id, order_id) VALUES (?,?)"
+            cursor.execute(sql, [user_id, order_id])
       conn.commit()
 
 
@@ -712,6 +859,7 @@ food3_img = PhotoImage(file="Images/food3.png").subsample(4,4)
 food4_img = PhotoImage(file="Images/food4.png").subsample(8,8)
 
 goBack_img = PhotoImage(file="Images/goBack.png").subsample(50,50)
+payment_img = PhotoImage(file="Images/payment.png").subsample(3,3)
 
 food1_fullsize_img = PhotoImage(file="Images/food1.png").subsample(2,2)
 food2_fullsize_img = PhotoImage(file="Images/food2.png").subsample(2,2)
