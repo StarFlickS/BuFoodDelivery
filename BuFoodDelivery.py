@@ -561,7 +561,7 @@ def loginclicked():
                         user_id = result[0]
                         MenuPage()
                   else:
-                        messagebox.showerror("Admin:", "Email or Password incorrect, please try again.")
+                        messagebox.showerror("Admin:", "Email or Password is incorrect, please try again.")
                         pwd_spy.set("")
                         gmail_spy.set("")
                         gmail_ent.focus_force()
